@@ -261,6 +261,12 @@ config LEDS_PMIC8058
 	  (Power Management IC) chip on Qualcomm reference boards,
 	  for example SURF and FFAs.
 
+config LEDS_LV5219LG
+	tristate "LV5219LG led IC"
+	depends on LEDS_CLASS && I2C
+	help
+	  This option enables support for LV5219LG led IC.
+
 comment "LED Triggers"
 
 config LEDS_TRIGGERS
