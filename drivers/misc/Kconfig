@@ -294,6 +294,14 @@ config APANIC_PLABEL
 	 If your platform uses a different flash partition label for storing
  	 crashdumps, enter it here.
 
+config SENSORS_ES209RA_PROXIMITY
+	bool "ES209RA Proximity Sensor"
+	default n
+
+config ES209RA_WLAN_POWER
+	bool "ES209RA WLAN Power driver"
+	default n
+
 config TSIF
 	depends on ARCH_MSM
 	tristate "TSIF (Transport Stream InterFace) support"
