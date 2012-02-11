@@ -228,6 +228,15 @@ config MACH_QSD8X50A_FFA
 	help
 	  Support for the Qualcomm QSD8x50A FFA eval board.
 
+config MACH_ES209RA
+	depends on ARCH_QSD8X50
+	depends on MSM_SOC_REV_NONE
+	depends on MSM_STACKED_MEMORY
+	default y
+	bool "QSD8x50 ES209RA (Rachael)"
+	help
+	  Support for the ES209RA (Rachael) SEMC product using QSD8x50.
+
 config MACH_QSD8X50A_ST1_5
 	depends on ARCH_QSD8X50
 	depends on MSM_SOC_REV_A
@@ -1209,5 +1218,36 @@ config MSM_WATCHDOG
 		core 0's watchdog, and reset the entire SoC if it times out. It does
 		not run during the bootup process, so it will not catch any early
 		lockups.
+
+config ES209RA_HEADSET
+	bool "ES209RA headset detection driver"
+	default y if MACH_ES209RA
+	help
+	  Provides support for detecting 3.5mm audio jack, such as wired
+	  headset, on the es209ra platform.
+
+config ES209RA_INPUT_GPIO_MATRIX
+	bool "ES209RA GPIO key matrix driver"
+	depends on MACH_ES209RA && INPUT_GPIO
+	default y
+	help
+	  Enable GPIO key matrix driver for es209ra.
+	  This driver is derived from common GPIO key matrix driver(gpio_matrix.c)
+	  Difference from the common driver is as follows:
+	   1. Support discard timer for long key press.
+	   2. Pull-up the KR line when the other KR line is being driven.
+
+config AUDIO_QDSP_AMP_GPIO_CTRL
+	bool "Enable audio qdsp amp gpio ctrl"
+	default n
+	help
+	  Enable GPIO control of audio qdsp amplifier.
+
+config PMIC_TIME
+	bool "Export pmic time as sysfs entry"
+	depends on (ARCH_MSM)
+	default n
+	help
+	  This exports pmic time in a sysfs entry.
 
 endif
