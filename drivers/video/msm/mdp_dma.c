@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2009, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -38,6 +39,15 @@
 #include "msm_fb.h"
 #include "mddihost.h"
 
+#include <linux/autoconf.h>
+
+#ifdef CONFIG_FB_MSM_MDDI_TMD_NT35580
+#include "mddi_tmd_nt35580.h"
+#endif
+
+/* SEMC added. Todo: Remove. For temporary patch in mdp_dma2_update_lcd */
+#include <linux/autoconf.h>
+
 static uint32 mdp_last_dma2_update_width;
 static uint32 mdp_last_dma2_update_height;
 static uint32 mdp_curr_dma2_update_width;
@@ -69,6 +79,11 @@ static void mdp_dma2_update_lcd(struct msm_fb_data_type *mfd)
 	    (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 	uint32 ystride = mfd->fbi->fix.line_length;
 	uint32 mddi_pkt_desc;
+
+#if defined(CONFIG_FB_MSM_MDDI_TMD_NT35580)
+	if (iBuf->dma_h == mfd->panel_info.yres)
+		mddi_nt35580_lcd_display_on();
+#endif
 
 	dma2_cfg_reg = DMA_PACK_ALIGN_LSB |
 		    DMA_OUT_SEL_AHB | DMA_IBUF_NONCONTIGUOUS;

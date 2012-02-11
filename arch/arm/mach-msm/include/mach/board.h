@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2007 Google, Inc.
  * Copyright (c) 2008-2010, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -139,6 +140,15 @@ struct msm_camera_sensor_info {
 	int csi_if;
 	struct msm_camera_csi_params csi_params;
 	struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
+};
+
+struct panel_data_ext {
+	void (*power_on) (void);
+	void (*power_off) (void);
+	void (*window_adjust) (u16 x1, u16 x2, u16 y1, u16 y2);
+	void (*exit_deep_standby) (void);
+	int use_dma_edge_pixels_fix;
+	void (*backlight_ctrl) (bool);
 };
 
 struct clk;

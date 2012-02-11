@@ -42,6 +42,12 @@
 #include "mdp4.h"
 #endif
 
+#include <linux/autoconf.h>
+
+#ifdef CONFIG_FB_MSM_MDDI_TMD_NT35580
+#include "mddi_tmd_nt35580.h"
+#endif
+
 static struct clk *mdp_clk;
 static struct clk *mdp_pclk;
 
@@ -101,6 +107,8 @@ extern int mdp_lcd_rd_cnt_offset_fast;
 extern int mdp_usec_diff_threshold;
 
 #ifdef CONFIG_FB_MSM_LCDC
+extern int mdp_lcdc_pclk_clk_rate;
+extern int mdp_lcdc_pad_pclk_clk_rate;
 extern int first_pixel_start_x;
 extern int first_pixel_start_y;
 #endif
@@ -672,6 +680,9 @@ irqreturn_t mdp_isr(int irq, void *ptr)
 			mdp_pipe_ctrl(MDP_DMA2_BLOCK, MDP_BLOCK_POWER_OFF,
 				      TRUE);
 			complete(&dma->comp);
+#ifdef CONFIG_FB_MSM_MDDI_TMD_NT35580
+			mddi_nt35580_lcd_display_on();
+#endif
 		}
 		/* PPP Complete */
 		if (mdp_interrupt & MDP_PPP_DONE) {
@@ -775,6 +786,12 @@ static void mdp_drv_init(void)
 				msm_fb_debugfs_file_create(mdp_dir,
 					"lcdc_start_y",
 					(u32 *) &first_pixel_start_y);
+				msm_fb_debugfs_file_create(mdp_dir,
+					"mdp_lcdc_pclk_clk_rate",
+					(u32 *) &mdp_lcdc_pclk_clk_rate);
+				msm_fb_debugfs_file_create(mdp_dir,
+					"mdp_lcdc_pad_pclk_clk_rate",
+					(u32 *) &mdp_lcdc_pad_pclk_clk_rate);
 #endif
 			}
 		}
@@ -838,6 +855,10 @@ static int mdp_off(struct platform_device *pdev)
 	return ret;
 }
 
+#if defined(CONFIG_FB_MSM_MDDI_TMD_NT35580)
+static DEFINE_MUTEX(mdp_on_mutex);
+#endif
+
 static int mdp_on(struct platform_device *pdev)
 {
 #ifdef MDP_HW_VSYNC
@@ -845,11 +866,24 @@ static int mdp_on(struct platform_device *pdev)
 #endif
 
 	int ret = 0;
+#if defined(CONFIG_FB_MSM_MDDI_TMD_NT35580)
+	int i;
+#endif
 
 #ifdef MDP_HW_VSYNC
 	mdp_hw_vsync_clk_enable(mfd);
 #endif
 
+#if defined(CONFIG_FB_MSM_MDDI_TMD_NT35580)
+	mutex_lock(&mdp_on_mutex);
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+	for (i = 0; i < MDP_CCS_SIZE; i++)
+		writel(mdp_ccs_yuv2rgb.ccs[i], MDP_CSC_PRMVn(i));
+	for (i = 0; i < MDP_BV_SIZE; i++)
+		writel(mdp_ccs_yuv2rgb.bv[i], MDP_CSC_PRE_BV1n(i));
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+	mutex_unlock(&mdp_on_mutex);
+#endif
 	ret = panel_next_on(pdev);
 
 	return ret;
