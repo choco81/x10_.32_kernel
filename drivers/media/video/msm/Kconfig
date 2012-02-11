@@ -103,3 +103,15 @@ config MSM_VPE
 	default y
 	---help---
 	  Enable support for Video Pre-processing Engine
+
+config SEMC_IMX046_CAMERA
+	bool "Sensor semc_imx046_camera"
+	depends on MSM_CAMERA
+	---help---
+	  semc imx046 camera
+
+config SONY_5MP_CAMERA_HEAD
+	bool "SONY 5MP camera head"
+	depends on SEMC_IMX046_CAMERA
+	---help---
+	  SONY 5MP camera head
