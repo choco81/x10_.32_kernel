@@ -18,7 +18,6 @@
 #include "kgsl.h"
 #include "kgsl_device.h"
 #include "kgsl_log.h"
-#include "kgsl_g12.h"
 
 #include "g12_reg.h"
 #include <linux/io.h>
@@ -29,6 +28,16 @@
 #define KGSL_G12_CMDWINDOW_ADDR_MASK		0x00FFFF00
 #define KGSL_G12_CMDWINDOW_TARGET_SHIFT		0
 #define KGSL_G12_CMDWINDOW_ADDR_SHIFT		8
+
+int kgsl_g12_cmdwindow_init(struct kgsl_device *device)
+{
+	return 0;
+}
+
+int kgsl_g12_cmdwindow_close(struct kgsl_device *device)
+{
+	return 0;
+}
 
 int kgsl_g12_cmdwindow_write(struct kgsl_device *device,
 		enum kgsl_cmdwindow_type target, unsigned int addr,
