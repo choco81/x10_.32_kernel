@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2009, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -38,6 +39,15 @@
 #include "msm_fb.h"
 #include "mddihost.h"
 
+#include <linux/autoconf.h>
+
+#ifdef CONFIG_FB_MSM_MDDI_TMD_NT35580
+#include "mddi_tmd_nt35580.h"
+#endif
+
+/* SEMC added. Todo: Remove. For temporary patch in mdp_dma2_update_lcd */
+#include <linux/autoconf.h>
+
 static uint32 mdp_last_dma2_update_width;
 static uint32 mdp_last_dma2_update_height;
 static uint32 mdp_curr_dma2_update_width;
@@ -69,6 +79,11 @@ static void mdp_dma2_update_lcd(struct msm_fb_data_type *mfd)
 	    (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
 	uint32 ystride = mfd->fbi->fix.line_length;
 	uint32 mddi_pkt_desc;
+
+#if defined(CONFIG_FB_MSM_MDDI_TMD_NT35580)
+	if (iBuf->dma_h == mfd->panel_info.yres)
+		mddi_nt35580_lcd_display_on();
+#endif
 
 	dma2_cfg_reg = DMA_PACK_TIGHT | DMA_PACK_ALIGN_LSB |
 	    DMA_OUT_SEL_AHB | DMA_IBUF_NONCONTIGUOUS;
@@ -114,7 +129,8 @@ static void mdp_dma2_update_lcd(struct msm_fb_data_type *mfd)
 			if (mfd->panel_info.pdest == DISPLAY_1) {
 				dma2_cfg_reg |= DMA_MDDI_DMAOUT_LCD_SEL_PRIMARY;
 				mddi_ld_param = 0;
-#ifdef MDDI_HOST_WINDOW_WORKAROUND
+#if defined(MDDI_HOST_WINDOW_WORKAROUND) \
+	|| defined(CONFIG_FB_MSM_MDDI_SEMC_LCD_WINDOW_ADJUST)
 				mddi_window_adjust(mfd, iBuf->dma_x,
 						   iBuf->dma_w - 1, iBuf->dma_y,
 						   iBuf->dma_h - 1);
@@ -123,7 +139,8 @@ static void mdp_dma2_update_lcd(struct msm_fb_data_type *mfd)
 				dma2_cfg_reg |=
 				    DMA_MDDI_DMAOUT_LCD_SEL_SECONDARY;
 				mddi_ld_param = 1;
-#ifdef MDDI_HOST_WINDOW_WORKAROUND
+#if defined(MDDI_HOST_WINDOW_WORKAROUND) \
+	|| defined(CONFIG_FB_MSM_MDDI_SEMC_LCD_WINDOW_ADJUST)
 				mddi_window_adjust(mfd, iBuf->dma_x,
 						   iBuf->dma_w - 1, iBuf->dma_y,
 						   iBuf->dma_h - 1);
@@ -151,6 +168,42 @@ static void mdp_dma2_update_lcd(struct msm_fb_data_type *mfd)
 
 	mdp_curr_dma2_update_width = iBuf->dma_w;
 	mdp_curr_dma2_update_height = iBuf->dma_h;
+
+	/* SEMC Begin */
+#ifdef CONFIG_FB_MSM_MDDI_HITACHI_HVGA_LCD
+	/* Todo: To be removed!
+	   This is a temporary fix for a HW bug in early driver IC version.
+	*/
+	if (pdata->panel_ext->use_dma_edge_pixels_fix == 1) {
+		struct fb_info *tmp_fbi;
+		struct fb_fix_screeninfo *tmp_fix;
+		uint8 *first_packet_in_dma_window_p;
+		uint8 *last_packet_in_dma_row_p;
+		int i = 0;
+
+		tmp_fbi = mfd->fbi;
+		tmp_fix = &tmp_fbi->fix;
+
+		dma2_cfg_reg &= ~DMA_DITHER_EN;
+
+		first_packet_in_dma_window_p = tmp_fbi->screen_base +
+			(iBuf->dma_x + (iBuf->dma_y + tmp_fbi->var.yoffset) *
+			iBuf->ibuf_width) * outBpp;
+		last_packet_in_dma_row_p = first_packet_in_dma_window_p +
+						(iBuf->dma_w - 1) * outBpp;
+
+		for (i=0; i < (iBuf->dma_h - 1); i++) {
+			/* Check for not allowed data */
+			if (((last_packet_in_dma_row_p[0] & 0x3F) == 0x2a) ||
+			    ((last_packet_in_dma_row_p[0] & 0x3F) == 0x2b)) {
+				/* clr bit5 */
+				last_packet_in_dma_row_p[0] &= 0xDF;
+			}
+			last_packet_in_dma_row_p += (iBuf->ibuf_width) * outBpp;
+		}
+	}
+#endif	/* CONFIG_FB_MSM_MDDI_HITACHI_HVGA_LCD */
+	/* SEMC End */
 
 	/* MDP cmd block enable */
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
