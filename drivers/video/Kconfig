@@ -2349,6 +2349,13 @@ config FB_MSM_MDDI_PANEL_AUTO_DETECT
 	---help---
 	  Support for MDDI panel auto detect
 
+config FB_MSM_MDDI_TMD_NT35580
+	depends on FB_MSM
+	tristate "MDDI NT35580 LCD FWVGA Panel"
+	select FB_MSM_MDDI
+	---help---
+	  Support for MDDI NT35580 LCD FWVGA (480x854) panel
+
 config FB_MSM_MDDI_PRISM_WVGA
 	bool "MDDI Prism WVGA Panel"
 	select FB_MSM_MDDI
